@@ -210,45 +210,86 @@ app.post('/planning', async (req, res) => {
         
         console.log('📅 Sauvegarde du planning pour la semaine:', week);
         
-        // Créer ou mettre à jour une page de planning dans Notion
-        const planningData = {
-            parent: { database_id: notionConfig.databases.semaines },
-            properties: {
-                'Semaine': {
-                    title: [{ text: { content: week } }]
-                },
-                'Planning': {
-                    rich_text: [{ text: { content: JSON.stringify(planning) } }]
-                },
-                'Date de mise à jour': {
-                    date: { start: timestamp.split('T')[0] }
-                }
-            }
-        };
-        
-        // Vérifier si une page existe déjà pour cette semaine
-        const existingPage = await callNotionAPI(`databases/${notionConfig.databases.semaines}/query`, 'POST', {
+        // D'abord, créer ou récupérer la semaine dans la base "Semaines"
+        let weekPageId;
+        const existingWeek = await callNotionAPI(`databases/${notionConfig.databases.semaines}/query`, 'POST', {
             filter: {
-                property: 'Semaine',
-                title: { equals: week }
+                property: 'Nom',
+                title: { contains: week }
             }
         });
         
-        let response;
-        if (existingPage.results.length > 0) {
-            // Mettre à jour la page existante
-            const pageId = existingPage.results[0].id;
-            response = await callNotionAPI(`pages/${pageId}`, 'PATCH', {
-                properties: planningData.properties
-            });
-            console.log('✅ Planning mis à jour');
+        if (existingWeek.results.length > 0) {
+            weekPageId = existingWeek.results[0].id;
         } else {
-            // Créer une nouvelle page
-            response = await callNotionAPI('pages', 'POST', planningData);
-            console.log('✅ Nouveau planning créé');
+            // Créer une nouvelle semaine
+            const weekData = {
+                parent: { database_id: notionConfig.databases.semaines },
+                properties: {
+                    'Nom': {
+                        title: [{ text: { content: `Semaine ${week}` } }]
+                    },
+                    'Dates': {
+                        date: { start: timestamp.split('T')[0] }
+                    },
+                    'Statut': {
+                        select: { name: 'Planifiée' }
+                    }
+                }
+            };
+            const weekResponse = await callNotionAPI('pages', 'POST', weekData);
+            weekPageId = weekResponse.id;
         }
         
-        res.json({ success: true, week, pageId: response.id });
+        // Supprimer les anciens repas de cette semaine
+        const existingMeals = await callNotionAPI(`databases/${notionConfig.databases.repas}/query`, 'POST', {
+            filter: {
+                property: 'Semaine',
+                relation: { contains: weekPageId }
+            }
+        });
+        
+        // Supprimer les anciens repas
+        for (const meal of existingMeals.results) {
+            await callNotionAPI(`pages/${meal.id}`, 'PATCH', {
+                archived: true
+            });
+        }
+        
+        // Créer les nouveaux repas
+        const savedMeals = [];
+        for (const [day, meals] of Object.entries(planning)) {
+            for (const [moment, recipeIds] of Object.entries(meals)) {
+                for (const recipeId of recipeIds) {
+                    const mealData = {
+                        parent: { database_id: notionConfig.databases.repas },
+                        properties: {
+                            'Nom': {
+                                title: [{ text: { content: `${day} ${moment}` } }]
+                            },
+                            'Jour': {
+                                select: { name: day }
+                            },
+                            'Moment': {
+                                select: { name: moment }
+                            },
+                            'Recette': {
+                                relation: [{ id: recipeId }]
+                            },
+                            'Semaine': {
+                                relation: [{ id: weekPageId }]
+                            }
+                        }
+                    };
+                    
+                    const mealResponse = await callNotionAPI('pages', 'POST', mealData);
+                    savedMeals.push(mealResponse.id);
+                }
+            }
+        }
+        
+        console.log('✅ Planning sauvegardé avec', savedMeals.length, 'repas');
+        res.json({ success: true, week, weekPageId, mealCount: savedMeals.length });
     } catch (error) {
         console.error('❌ Erreur lors de la sauvegarde du planning:', error);
         res.status(500).json({ 
@@ -265,32 +306,57 @@ app.get('/planning/:week', async (req, res) => {
         
         console.log('📅 Récupération du planning pour la semaine:', week);
         
-        const response = await callNotionAPI(`databases/${notionConfig.databases.semaines}/query`, 'POST', {
+        // Récupérer la semaine
+        const weekResponse = await callNotionAPI(`databases/${notionConfig.databases.semaines}/query`, 'POST', {
             filter: {
-                property: 'Semaine',
-                title: { equals: week }
+                property: 'Nom',
+                title: { contains: week }
             }
         });
         
-        if (response.results.length > 0) {
-            const page = response.results[0];
-            const planningText = page.properties.Planning?.rich_text?.[0]?.text?.content;
-            
-            let planning = {};
-            if (planningText) {
-                try {
-                    planning = JSON.parse(planningText);
-                } catch (parseError) {
-                    console.warn('⚠️ Erreur de parsing du planning, retour d\'un planning vide');
-                }
-            }
-            
-            console.log('✅ Planning récupéré');
-            res.json({ week, planning, pageId: page.id });
-        } else {
-            console.log('ℹ️ Aucun planning trouvé pour cette semaine');
-            res.status(404).json({ message: 'Aucun planning trouvé pour cette semaine' });
+        if (weekResponse.results.length === 0) {
+            console.log('ℹ️ Aucune semaine trouvée:', week);
+            return res.status(404).json({ message: 'Aucun planning trouvé pour cette semaine' });
         }
+        
+        const weekPageId = weekResponse.results[0].id;
+        
+        // Récupérer tous les repas de cette semaine
+        const mealsResponse = await callNotionAPI(`databases/${notionConfig.databases.repas}/query`, 'POST', {
+            filter: {
+                property: 'Semaine',
+                relation: { contains: weekPageId }
+            }
+        });
+        
+        // Reconstituer le planning
+        const planning = {};
+        const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+        const moments = ['Midi', 'Soir'];
+        
+        // Initialiser le planning vide
+        jours.forEach(jour => {
+            planning[jour] = {};
+            moments.forEach(moment => {
+                planning[jour][moment] = [];
+            });
+        });
+        
+        // Remplir avec les repas existants
+        for (const meal of mealsResponse.results) {
+            const jour = meal.properties.Jour?.select?.name;
+            const moment = meal.properties.Moment?.select?.name;
+            const recetteId = meal.properties.Recette?.relation?.[0]?.id;
+            
+            if (jour && moment && recetteId) {
+                if (!planning[jour]) planning[jour] = {};
+                if (!planning[jour][moment]) planning[jour][moment] = [];
+                planning[jour][moment].push(recetteId);
+            }
+        }
+        
+        console.log('✅ Planning récupéré avec', mealsResponse.results.length, 'repas');
+        res.json({ week, planning, weekPageId, mealCount: mealsResponse.results.length });
     } catch (error) {
         console.error('❌ Erreur lors de la récupération du planning:', error);
         res.status(500).json({ 
