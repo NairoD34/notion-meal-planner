@@ -201,6 +201,105 @@ app.delete('/recipes/:id', async (req, res) => {
     }
 });
 
+// ===== GESTION DU PLANNING =====
+
+// Sauvegarder un planning de semaine
+app.post('/planning', async (req, res) => {
+    try {
+        const { week, planning, timestamp } = req.body;
+        
+        console.log('📅 Sauvegarde du planning pour la semaine:', week);
+        
+        // Créer ou mettre à jour une page de planning dans Notion
+        const planningData = {
+            parent: { database_id: notionConfig.databases.semaines },
+            properties: {
+                'Semaine': {
+                    title: [{ text: { content: week } }]
+                },
+                'Planning': {
+                    rich_text: [{ text: { content: JSON.stringify(planning) } }]
+                },
+                'Date de mise à jour': {
+                    date: { start: timestamp.split('T')[0] }
+                }
+            }
+        };
+        
+        // Vérifier si une page existe déjà pour cette semaine
+        const existingPage = await callNotionAPI(`databases/${notionConfig.databases.semaines}/query`, 'POST', {
+            filter: {
+                property: 'Semaine',
+                title: { equals: week }
+            }
+        });
+        
+        let response;
+        if (existingPage.results.length > 0) {
+            // Mettre à jour la page existante
+            const pageId = existingPage.results[0].id;
+            response = await callNotionAPI(`pages/${pageId}`, 'PATCH', {
+                properties: planningData.properties
+            });
+            console.log('✅ Planning mis à jour');
+        } else {
+            // Créer une nouvelle page
+            response = await callNotionAPI('pages', 'POST', planningData);
+            console.log('✅ Nouveau planning créé');
+        }
+        
+        res.json({ success: true, week, pageId: response.id });
+    } catch (error) {
+        console.error('❌ Erreur lors de la sauvegarde du planning:', error);
+        res.status(500).json({ 
+            error: 'Erreur lors de la sauvegarde du planning',
+            details: error.response?.data || error.message 
+        });
+    }
+});
+
+// Récupérer un planning de semaine
+app.get('/planning/:week', async (req, res) => {
+    try {
+        const { week } = req.params;
+        
+        console.log('📅 Récupération du planning pour la semaine:', week);
+        
+        const response = await callNotionAPI(`databases/${notionConfig.databases.semaines}/query`, 'POST', {
+            filter: {
+                property: 'Semaine',
+                title: { equals: week }
+            }
+        });
+        
+        if (response.results.length > 0) {
+            const page = response.results[0];
+            const planningText = page.properties.Planning?.rich_text?.[0]?.text?.content;
+            
+            let planning = {};
+            if (planningText) {
+                try {
+                    planning = JSON.parse(planningText);
+                } catch (parseError) {
+                    console.warn('⚠️ Erreur de parsing du planning, retour d\'un planning vide');
+                }
+            }
+            
+            console.log('✅ Planning récupéré');
+            res.json({ week, planning, pageId: page.id });
+        } else {
+            console.log('ℹ️ Aucun planning trouvé pour cette semaine');
+            res.status(404).json({ message: 'Aucun planning trouvé pour cette semaine' });
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors de la récupération du planning:', error);
+        res.status(500).json({ 
+            error: 'Erreur lors de la récupération du planning',
+            details: error.response?.data || error.message 
+        });
+    }
+});
+
 // ===== GESTION DES INGRÉDIENTS =====
 
 // Récupérer tous les ingrédients
