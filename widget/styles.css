@@ -1,0 +1,423 @@
+/* Style général */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.meal-planner {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* Header */
+.planner-header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.planner-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.week-selector {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.week-selector button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background 0.3s;
+}
+
+.week-selector button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.week-selector span {
+    font-weight: 600;
+    font-size: 18px;
+}
+
+/* Container principal */
+.main-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    padding: 30px;
+}
+
+/* Section de planification */
+.planning-section h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.day-column {
+    background: #f8f9ff;
+    border-radius: 15px;
+    padding: 15px;
+    border: 2px solid #e1e5e9;
+    transition: border-color 0.3s;
+}
+
+.day-column:hover {
+    border-color: #4facfe;
+}
+
+.day-column h3 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.meal-slot {
+    margin-bottom: 15px;
+}
+
+.meal-slot:last-child {
+    margin-bottom: 0;
+}
+
+.meal-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recipe-drop-zone {
+    min-height: 60px;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.recipe-drop-zone:hover,
+.recipe-drop-zone.drag-over {
+    border-color: #4facfe;
+    background: #f0f8ff;
+}
+
+.recipe-drop-zone .placeholder {
+    color: #999;
+    font-size: 11px;
+    text-align: center;
+}
+
+.recipe-card-small {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+    position: relative;
+    cursor: move;
+}
+
+.recipe-card-small .remove-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ff4757;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+}
+
+.recipe-card-small:hover .remove-btn {
+    display: block;
+}
+
+/* Section des recettes */
+.recipes-section h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.recipe-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 2px solid #e1e5e9;
+    background: white;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background: #4facfe;
+    color: white;
+    border-color: #4facfe;
+}
+
+.recipes-list {
+    max-height: 500px;
+    overflow-y: auto;
+    display: grid;
+    gap: 10px;
+}
+
+.recipe-card {
+    background: white;
+    border: 2px solid #e1e5e9;
+    border-radius: 12px;
+    padding: 15px;
+    cursor: move;
+    transition: all 0.3s;
+    user-select: none;
+}
+
+.recipe-card:hover {
+    border-color: #4facfe;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+}
+
+.recipe-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.recipe-category {
+    display: inline-block;
+    background: #f0f8ff;
+    color: #4facfe;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.recipe-link {
+    color: #666;
+    font-size: 12px;
+    text-decoration: none;
+    margin-top: 5px;
+    display: block;
+}
+
+.recipe-link:hover {
+    color: #4facfe;
+}
+
+/* Section de liste de courses */
+.shopping-section {
+    grid-column: 1 / -1;
+    background: #f8f9ff;
+    border-radius: 15px;
+    padding: 30px;
+    margin: 0 30px 30px;
+}
+
+.shopping-section h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.shopping-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.shopping-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.shopping-item {
+    background: white;
+    border: 2px solid #e1e5e9;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s;
+}
+
+.shopping-item:hover {
+    border-color: #4facfe;
+}
+
+.shopping-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #4facfe;
+}
+
+.shopping-item.checked {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+.ingredient-name {
+    font-weight: 600;
+    color: #333;
+}
+
+.ingredient-quantity {
+    color: #666;
+    font-size: 14px;
+}
+
+.empty-shopping {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 40px;
+}
+
+/* Actions rapides */
+.quick-actions {
+    display: flex;
+    gap: 15px;
+    padding: 0 30px 30px;
+    flex-wrap: wrap;
+}
+
+/* Boutons */
+.btn-primary {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: #f1f2f6;
+    color: #333;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+    color: white;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .week-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .week-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .planner-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .quick-actions {
+        justify-content: center;
+    }
+}

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificateur de Repas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="meal-planner">
+        <header class="planner-header">
+            <h1>🍽️ Planificateur de Repas</h1>
+            <div class="week-selector">
+                <button id="prev-week">←</button>
+                <span id="current-week">Semaine du 9 Sep 2025</span>
+                <button id="next-week">→</button>
+            </div>
+        </header>
+
+        <div class="main-container">
+            <!-- Section de planification -->
+            <div class="planning-section">
+                <h2>📅 Planning de la semaine</h2>
+                <div class="week-grid">
+                    <div class="day-column" data-day="lundi">
+                        <h3>Lundi</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="mardi">
+                        <h3>Mardi</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="mercredi">
+                        <h3>Mercredi</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="jeudi">
+                        <h3>Jeudi</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="vendredi">
+                        <h3>Vendredi</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="samedi">
+                        <h3>Samedi</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="day-column" data-day="dimanche">
+                        <h3>Dimanche</h3>
+                        <div class="meal-slot" data-meal="midi">
+                            <span class="meal-label">Midi</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                        <div class="meal-slot" data-meal="soir">
+                            <span class="meal-label">Soir</span>
+                            <div class="recipe-drop-zone" ondrop="dropRecipe(event)" ondragover="allowDrop(event)">
+                                <span class="placeholder">Glissez une recette ici</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section des recettes -->
+            <div class="recipes-section">
+                <h2>📚 Mes Recettes</h2>
+                <div class="recipe-filters">
+                    <button class="filter-btn active" data-category="all">Toutes</button>
+                    <button class="filter-btn" data-category="Plat">Plats</button>
+                    <button class="filter-btn" data-category="Dessert">Desserts</button>
+                    <button class="filter-btn" data-category="Rapide">Rapides</button>
+                </div>
+                <div class="recipes-list" id="recipes-list">
+                    <!-- Les recettes seront chargées ici -->
+                    <div class="loading">Chargement des recettes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section de la liste de courses -->
+        <div class="shopping-section">
+            <h2>🛒 Liste de Courses</h2>
+            <div class="shopping-actions">
+                <button id="generate-shopping-list" class="btn-primary">Générer la liste</button>
+                <button id="clear-shopping-list" class="btn-secondary">Vider</button>
+            </div>
+            <div class="shopping-list" id="shopping-list">
+                <div class="empty-shopping">
+                    Votre liste de courses apparaîtra ici après avoir planifié vos repas.
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="quick-actions">
+            <button id="save-week" class="btn-success">💾 Sauvegarder la semaine</button>
+            <button id="duplicate-week" class="btn-info">📋 Dupliquer la semaine</button>
+            <button id="clear-week" class="btn-warning">🗑️ Vider la semaine</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
