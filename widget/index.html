@@ -215,6 +215,25 @@
         </div>
     </div>
 
+    <!-- Modal de confirmation de suppression -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🗑️ Supprimer la recette</h3>
+                <span class="close" id="close-delete-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette recette ?</p>
+                <p><strong id="recipe-to-delete-name"></strong></p>
+                <p class="warning-text">⚠️ Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-delete" class="btn-secondary">Annuler</button>
+                <button id="confirm-delete" class="btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

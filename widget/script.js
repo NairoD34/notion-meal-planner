@@ -16,13 +16,17 @@ let currentWeek = new Date();
 let recipes = [];
 let currentPlanning = {};
 let shoppingList = [];
+let favoriteRecipes = new Set(); // Pour stocker les IDs des recettes favorites
+let recipeToDelete = null; // Pour stocker la recette à supprimer
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
     initializePlanner();
     setupEventListeners();
+    loadFavorites(); // Charger les favoris
     loadRecipes();
     updateWeekDisplay();
+    setupDeleteModal(); // Configurer la modale de suppression
 });
 
 // Initialisation du planificateur
@@ -179,13 +183,24 @@ function displayRecipes(recipesToShow) {
         return;
     }
     
-    recipesList.innerHTML = recipesToShow.map(recipe => `
-        <div class="recipe-card" draggable="true" data-recipe-id="${recipe.id}">
-            <div class="recipe-name">${recipe.nom}</div>
-            <span class="recipe-category">${recipe.categorie}</span>
-            ${recipe.lien ? `<a href="${recipe.lien}" class="recipe-link" target="_blank">Voir la recette</a>` : ''}
-        </div>
-    `).join('');
+    recipesList.innerHTML = recipesToShow.map(recipe => {
+        const isFavorite = favoriteRecipes.has(recipe.id);
+        return `
+            <div class="recipe-card ${isFavorite ? 'favorite' : ''}" draggable="true" data-recipe-id="${recipe.id}" data-category="${recipe.categorie}">
+                <div class="recipe-name">${recipe.nom}</div>
+                <span class="recipe-category">${recipe.categorie}</span>
+                ${recipe.lien ? `<a href="${recipe.lien}" class="recipe-link" target="_blank">Voir la recette</a>` : ''}
+                <div class="recipe-actions">
+                    <button class="btn-favorite ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${recipe.id}')" title="${isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}">
+                        ${isFavorite ? '❤️' : '🤍'}
+                    </button>
+                    <button class="btn-delete" onclick="confirmDeleteRecipe('${recipe.id}')" title="Supprimer la recette">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
     
     // Ajouter les événements de drag and drop
     document.querySelectorAll('.recipe-card').forEach(card => {
@@ -526,7 +541,102 @@ async function createRecipeInNotion(name, category, link, ingredients) {
 // Fermer le modal en cliquant à l'extérieur
 window.onclick = function(event) {
     const modal = document.getElementById('recipe-modal');
+    const deleteModal = document.getElementById('delete-modal');
     if (event.target === modal) {
         closeRecipeModal();
     }
+    if (event.target === deleteModal) {
+        closeDeleteModal();
+    }
 };
+
+// ===== GESTION DES FAVORIS ET SUPPRESSION =====
+
+// Gestion des favoris
+function toggleFavorite(recipeId) {
+    if (favoriteRecipes.has(recipeId)) {
+        favoriteRecipes.delete(recipeId);
+    } else {
+        favoriteRecipes.add(recipeId);
+    }
+    
+    // Sauvegarder les favoris dans le localStorage
+    localStorage.setItem('favoriteRecipes', JSON.stringify([...favoriteRecipes]));
+    
+    // Rafraîchir l'affichage
+    const currentFilter = document.querySelector('.filter-btn.active').dataset.category;
+    filterRecipes(currentFilter);
+}
+
+// Charger les favoris depuis le localStorage
+function loadFavorites() {
+    const saved = localStorage.getItem('favoriteRecipes');
+    if (saved) {
+        favoriteRecipes = new Set(JSON.parse(saved));
+    }
+}
+
+// Confirmation de suppression
+function confirmDeleteRecipe(recipeId) {
+    const recipe = recipes.find(r => r.id === recipeId);
+    if (!recipe) return;
+    
+    recipeToDelete = recipeId;
+    document.getElementById('recipe-to-delete-name').textContent = recipe.nom;
+    document.getElementById('delete-modal').style.display = 'block';
+}
+
+// Fermer la modale de suppression
+function closeDeleteModal() {
+    document.getElementById('delete-modal').style.display = 'none';
+    recipeToDelete = null;
+}
+
+// Supprimer une recette
+async function deleteRecipe(recipeId) {
+    try {
+        // TODO: Appel API pour supprimer de Notion
+        // await callNotionAPI(`pages/${recipeId}`, 'PATCH', { archived: true });
+        
+        // Supprimer de la liste locale
+        recipes = recipes.filter(r => r.id !== recipeId);
+        
+        // Supprimer des favoris si elle y était
+        favoriteRecipes.delete(recipeId);
+        localStorage.setItem('favoriteRecipes', JSON.stringify([...favoriteRecipes]));
+        
+        // Rafraîchir l'affichage
+        const currentFilter = document.querySelector('.filter-btn.active').dataset.category;
+        filterRecipes(currentFilter);
+        
+        console.log('✅ Recette supprimée avec succès');
+    } catch (error) {
+        console.error('❌ Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression de la recette');
+    }
+}
+
+// Initialiser les événements de suppression
+function setupDeleteModal() {
+    const closeDeleteModal = document.getElementById('close-delete-modal');
+    const cancelDelete = document.getElementById('cancel-delete');
+    const confirmDelete = document.getElementById('confirm-delete');
+    
+    // Fermer la modale
+    if (closeDeleteModal) {
+        closeDeleteModal.addEventListener('click', closeDeleteModal);
+    }
+    if (cancelDelete) {
+        cancelDelete.addEventListener('click', closeDeleteModal);
+    }
+    
+    // Confirmer la suppression
+    if (confirmDelete) {
+        confirmDelete.addEventListener('click', async () => {
+            if (recipeToDelete) {
+                await deleteRecipe(recipeToDelete);
+                closeDeleteModal();
+            }
+        });
+    }
+}

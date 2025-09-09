@@ -224,6 +224,7 @@ body {
     cursor: move;
     transition: all 0.3s;
     user-select: none;
+    position: relative;
 }
 
 .recipe-card:hover {
@@ -235,6 +236,51 @@ body {
 .recipe-card.dragging {
     opacity: 0.5;
     transform: rotate(5deg);
+}
+
+.recipe-card.favorite {
+    border-color: #ff6b6b;
+    background: linear-gradient(45deg, #fff, #fff5f5);
+}
+
+.recipe-card .recipe-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.recipe-card .btn-favorite,
+.recipe-card .btn-delete {
+    background: none;
+    border: 2px solid;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+    min-width: 30px;
+}
+
+.recipe-card .btn-favorite {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.recipe-card .btn-favorite:hover,
+.recipe-card .btn-favorite.active {
+    background: #ff6b6b;
+    color: white;
+}
+
+.recipe-card .btn-delete {
+    border-color: #f44336;
+    color: #f44336;
+}
+
+.recipe-card .btn-delete:hover {
+    background: #f44336;
+    color: white;
 }
 
 .recipe-name {
@@ -522,4 +568,26 @@ button:hover {
 
 .form-actions button {
     padding: 12px 24px;
+}
+
+/* Boutons spéciaux */
+.btn-danger {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.warning-text {
+    color: #f44336;
+    font-size: 0.9em;
+    font-style: italic;
+    margin-top: 10px;
 }
