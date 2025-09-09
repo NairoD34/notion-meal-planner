@@ -618,25 +618,42 @@ async function deleteRecipe(recipeId) {
 
 // Initialiser les événements de suppression
 function setupDeleteModal() {
-    const closeDeleteModalBtn = document.getElementById('close-delete-modal');
-    const cancelDeleteBtn = document.getElementById('cancel-delete');
-    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    console.log('🔧 Configuration de la modale de suppression...');
     
-    // Fermer la modale
-    if (closeDeleteModalBtn) {
-        closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
-    }
-    if (cancelDeleteBtn) {
-        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+    // S'assurer que la modale est fermée au démarrage
+    const deleteModal = document.getElementById('delete-modal');
+    if (deleteModal) {
+        deleteModal.style.display = 'none';
     }
     
-    // Confirmer la suppression
-    if (confirmDeleteBtn) {
-        confirmDeleteBtn.addEventListener('click', async () => {
+    // Événements de fermeture
+    const closeBtn = document.getElementById('close-delete-modal');
+    const cancelBtn = document.getElementById('cancel-delete');
+    const confirmBtn = document.getElementById('confirm-delete');
+    
+    if (closeBtn) {
+        closeBtn.onclick = function(e) {
+            e.preventDefault();
+            closeDeleteModal();
+        };
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.onclick = function(e) {
+            e.preventDefault();
+            closeDeleteModal();
+        };
+    }
+    
+    if (confirmBtn) {
+        confirmBtn.onclick = async function(e) {
+            e.preventDefault();
             if (recipeToDelete) {
                 await deleteRecipe(recipeToDelete);
                 closeDeleteModal();
             }
-        });
+        };
     }
+    
+    console.log('✅ Modale de suppression configurée');
 }
