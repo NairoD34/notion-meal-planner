@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: notion-meal-planner-proxy
+    runtime: node
+    rootDir: proxy-server
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NOTION_API_KEY
+        fromParam: NOTION_API_KEY
+      - key: NOTION_DATABASE_INGREDIENTS
+        fromParam: NOTION_DATABASE_INGREDIENTS
+      - key: NOTION_DATABASE_RECETTES
+        fromParam: NOTION_DATABASE_RECETTES
+      - key: NOTION_DATABASE_SEMAINES
+        fromParam: NOTION_DATABASE_SEMAINES
+      - key: NOTION_DATABASE_REPAS
+        fromParam: NOTION_DATABASE_REPAS
+      - key: NOTION_DATABASE_COURSES
+        fromParam: NOTION_DATABASE_COURSES

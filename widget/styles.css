@@ -57,6 +57,22 @@ body {
     background: rgba(255, 255, 255, 0.3);
 }
 
+.week-selector .today-btn {
+    background: rgba(255, 255, 255, 0.9);
+    color: #4facfe;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-left: 10px;
+}
+
+.week-selector .today-btn:hover {
+    background: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .week-selector span {
     font-weight: 600;
     font-size: 18px;
@@ -102,6 +118,24 @@ body {
     margin-bottom: 15px;
     font-size: 16px;
     font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+/* Styles pour la semaine courante */
+.day-column h3.current-week {
+    background: rgba(79, 172, 254, 0.1);
+    color: #2563eb;
+}
+
+/* Styles pour le jour d'aujourd'hui */
+.day-column h3.today {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    transform: scale(1.05);
 }
 
 .meal-slot {

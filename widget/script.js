@@ -15,12 +15,22 @@ const NOTION_CONFIG = {
 };
 
 // Variables globales
-let currentWeek = new Date();
+let currentWeek = getStartOfCurrentWeek(); // Commencer par la semaine courante
 let recipes = [];
 let currentPlanning = {};
 let shoppingList = [];
 let favoriteRecipes = new Set(); // Pour stocker les IDs des recettes favorites
 let recipeToDelete = null; // Pour stocker la recette à supprimer
+
+// Fonction pour obtenir le début de la semaine courante (lundi)
+function getStartOfCurrentWeek() {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = dimanche, 1 = lundi, etc.
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    monday.setHours(0, 0, 0, 0); // Minuit
+    return monday;
+}
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', function() {
@@ -53,6 +63,7 @@ function setupEventListeners() {
     // Navigation des semaines
     document.getElementById('prev-week').addEventListener('click', () => changeWeek(-1));
     document.getElementById('next-week').addEventListener('click', () => changeWeek(1));
+    document.getElementById('today-week').addEventListener('click', goToCurrentWeek);
     
     // Filtres de recettes
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -328,8 +339,63 @@ function updateWeekDisplay() {
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekEnd.getDate() + 6);
     
-    document.getElementById('current-week').textContent = 
-        `Semaine du ${weekStart.toLocaleDateString('fr-FR', options)}`;
+    // Vérifier si c'est la semaine courante
+    const today = new Date();
+    const currentWeekStart = getStartOfCurrentWeek();
+    const isCurrentWeek = weekStart.getTime() === currentWeekStart.getTime();
+    
+    // Formater l'affichage
+    let weekText = `Semaine du ${weekStart.toLocaleDateString('fr-FR', options)}`;
+    
+    if (isCurrentWeek) {
+        weekText += ` 📍 (Cette semaine)`;
+    } else {
+        // Calculer la différence en semaines
+        const weeksDiff = Math.round((weekStart - currentWeekStart) / (7 * 24 * 60 * 60 * 1000));
+        if (weeksDiff === 1) {
+            weekText += ` ➡️ (Semaine prochaine)`;
+        } else if (weeksDiff === -1) {
+            weekText += ` ⬅️ (Semaine dernière)`;
+        } else if (weeksDiff > 1) {
+            weekText += ` ➡️ (Dans ${weeksDiff} semaines)`;
+        } else if (weeksDiff < -1) {
+            weekText += ` ⬅️ (Il y a ${Math.abs(weeksDiff)} semaines)`;
+        }
+    }
+    
+    document.getElementById('current-week').textContent = weekText;
+    
+    // Mettre à jour les couleurs des jours pour marquer aujourd'hui
+    updateDayHighlights(isCurrentWeek);
+}
+
+// Fonction pour surligner le jour actuel
+function updateDayHighlights(isCurrentWeek) {
+    const dayElements = document.querySelectorAll('.day-column h3');
+    const today = new Date();
+    const todayDay = today.getDay(); // 0 = dimanche, 1 = lundi, etc.
+    
+    dayElements.forEach((dayElement, index) => {
+        // Retirer les anciennes classes
+        dayElement.classList.remove('today', 'current-week');
+        
+        if (isCurrentWeek) {
+            dayElement.classList.add('current-week');
+            
+            // Index 0 = Lundi, donc ajuster pour correspondre à getDay()
+            const elementDay = index + 1; // 1 = lundi, 2 = mardi, etc.
+            
+            if (elementDay === todayDay || (elementDay === 7 && todayDay === 0)) {
+                dayElement.classList.add('today');
+            }
+        }
+    });
+}
+
+// Ajouter un bouton pour revenir à la semaine courante
+function goToCurrentWeek() {
+    currentWeek = getStartOfCurrentWeek();
+    updateWeekDisplay();
 }
 
 // Génération de la liste de courses
