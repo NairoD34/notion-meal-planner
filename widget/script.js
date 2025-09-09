@@ -133,6 +133,32 @@ async function loadRecipes() {
                     { nom: 'Fromage', quantite: 50, unite: 'g' },
                     { nom: 'Salade', quantite: 2, unite: 'pièce' }
                 ]
+            },
+            {
+                id: '6',
+                nom: 'Salade de quinoa',
+                categorie: 'Healthy',
+                lien: 'https://example.com/quinoa',
+                ingredients: [
+                    { nom: 'Quinoa', quantite: 200, unite: 'g' },
+                    { nom: 'Avocat', quantite: 2, unite: 'pièce' },
+                    { nom: 'Tomates cerises', quantite: 200, unite: 'g' },
+                    { nom: 'Concombre', quantite: 1, unite: 'pièce' },
+                    { nom: 'Feta', quantite: 100, unite: 'g' }
+                ]
+            },
+            {
+                id: '7',
+                nom: 'Bowl végétarien',
+                categorie: 'Healthy',
+                lien: 'https://example.com/bowl',
+                ingredients: [
+                    { nom: 'Riz complet', quantite: 150, unite: 'g' },
+                    { nom: 'Brocolis', quantite: 300, unite: 'g' },
+                    { nom: 'Pois chiches', quantite: 200, unite: 'g' },
+                    { nom: 'Carottes', quantite: 2, unite: 'pièce' },
+                    { nom: 'Graines de tournesol', quantite: 50, unite: 'g' }
+                ]
             }
         ];
         
