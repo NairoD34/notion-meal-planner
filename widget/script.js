@@ -1,6 +1,7 @@
-// Configuration de l'API Notion
+// Configuration de l'API Notion via Proxy
 const NOTION_CONFIG = {
-    apiKey: 'ntn_x27335937177Ycms81oM2Sb7Upo0RJJg3YlBcgP73AzahB', // Remplacez par VOTRE clé API
+    proxyURL: 'http://localhost:3001/api', // URL du serveur proxy
+    apiKey: 'ntn_x27335937177Ycms81oM2Sb7Upo0RJJg3YlBcgP73AzahB', // Garde pour référence
     version: '2022-06-28',
     databases: {
         ingredients: '2690a2ef-5475-8188-8b3b-ebbfbc171c18',
@@ -68,16 +69,56 @@ function setupEventListeners() {
     document.getElementById('recipe-form').addEventListener('submit', handleCreateRecipe);
 }
 
-// Chargement des recettes depuis Notion
+// Chargement des recettes depuis Notion via proxy
 async function loadRecipes() {
     try {
         const recipesList = document.getElementById('recipes-list');
-        recipesList.innerHTML = '<div class="loading">Chargement des recettes...</div>';
+        recipesList.innerHTML = '<div class="loading">Chargement des recettes depuis Notion...</div>';
         
-        // Simulation de données (à remplacer par un vrai appel API)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Tenter de charger depuis Notion via le proxy
+        try {
+            console.log('📡 Connexion au proxy Notion...');
+            const response = await fetch(`${NOTION_CONFIG.proxyURL}/recipes`);
+            
+            if (response.ok) {
+                recipes = await response.json();
+                console.log('📚 Recettes chargées depuis Notion:', recipes.length);
+            } else {
+                throw new Error(`Erreur proxy: ${response.status}`);
+            }
+        } catch (proxyError) {
+            console.warn('⚠️ Proxy non disponible, utilisation du cache local:', proxyError.message);
+            
+            // Fallback vers localStorage si le proxy n'est pas disponible
+            const savedRecipes = loadRecipesFromStorage();
+            
+            if (savedRecipes && savedRecipes.length > 0) {
+                recipes = savedRecipes;
+                console.log('� Recettes chargées depuis localStorage:', recipes.length);
+            } else {
+                console.log('📚 Chargement des recettes par défaut...');
+                recipes = getDefaultRecipes();
+                saveRecipesToStorage(recipes);
+            }
+            
+            // Afficher un message d'avertissement
+            const warning = document.createElement('div');
+            warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 6px; color: #856404;';
+            warning.innerHTML = '⚠️ <strong>Mode hors ligne:</strong> Démarrez le serveur proxy pour synchroniser avec Notion';
+            recipesList.parentNode.insertBefore(warning, recipesList);
+        }
         
-        recipes = [
+        displayRecipes(recipes);
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement des recettes:', error);
+        document.getElementById('recipes-list').innerHTML = 
+            '<div class="loading">Erreur lors du chargement des recettes</div>';
+    }
+}
+
+// Recettes par défaut
+function getDefaultRecipes() {
+    return [
             {
                 id: '1',
                 nom: 'Pâtes Carbonara',
@@ -165,12 +206,6 @@ async function loadRecipes() {
                 ]
             }
         ];
-        
-        displayRecipes(recipes);
-    } catch (error) {
-        console.error('Erreur lors du chargement des recettes:', error);
-        document.getElementById('recipes-list').innerHTML = 
-            '<div class="loading">Erreur lors du chargement des recettes</div>';
     }
 }
 
@@ -454,11 +489,50 @@ async function handleCreateRecipe(e) {
     const ingredients = parseIngredients(ingredientsText);
     
     try {
-        // Créer la recette dans Notion
-        const newRecipe = await createRecipeInNotion(name, category, link, ingredients);
-        
-        // Ajouter à la liste locale
-        recipes.push(newRecipe);
+        // Essayer de créer via le proxy Notion
+        try {
+            console.log('📡 Création de recette via proxy Notion...');
+            const response = await fetch(`${NOTION_CONFIG.proxyURL}/recipes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nom: name,
+                    categorie: category,
+                    lien: link,
+                    ingredients: ingredients
+                })
+            });
+            
+            if (response.ok) {
+                const newRecipe = await response.json();
+                console.log('✅ Recette créée dans Notion:', newRecipe.id);
+                
+                // Ajouter à la liste locale
+                recipes.push(newRecipe);
+            } else {
+                throw new Error(`Erreur proxy: ${response.status}`);
+            }
+        } catch (proxyError) {
+            console.warn('⚠️ Proxy non disponible, sauvegarde locale:', proxyError.message);
+            
+            // Fallback vers localStorage si le proxy n'est pas disponible
+            const newId = 'local_' + Date.now();
+            const newRecipe = {
+                id: newId,
+                nom: name,
+                categorie: category,
+                lien: link,
+                ingredients: ingredients
+            };
+            
+            // Ajouter à la liste locale
+            recipes.push(newRecipe);
+            
+            // Sauvegarder dans localStorage
+            saveRecipesToStorage(recipes);
+        }
         
         // Rafraîchir l'affichage
         displayRecipes(recipes);
@@ -466,9 +540,10 @@ async function handleCreateRecipe(e) {
         // Fermer le modal
         closeRecipeModal();
         
+        console.log('✅ Recette créée avec succès !');
         alert('✅ Recette créée avec succès !');
     } catch (error) {
-        console.error('Erreur lors de la création de la recette:', error);
+        console.error('❌ Erreur lors de la création:', error);
         alert('❌ Erreur lors de la création de la recette');
     }
 }
@@ -595,11 +670,27 @@ function closeDeleteModal() {
 // Supprimer une recette
 async function deleteRecipe(recipeId) {
     try {
-        // TODO: Appel API pour supprimer de Notion
-        // await callNotionAPI(`pages/${recipeId}`, 'PATCH', { archived: true });
+        // Essayer de supprimer via le proxy Notion
+        try {
+            console.log('📡 Suppression via proxy Notion...');
+            const response = await fetch(`${NOTION_CONFIG.proxyURL}/recipes/${recipeId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                console.log('✅ Recette supprimée de Notion');
+            } else {
+                throw new Error(`Erreur proxy: ${response.status}`);
+            }
+        } catch (proxyError) {
+            console.warn('⚠️ Proxy non disponible pour la suppression:', proxyError.message);
+        }
         
-        // Supprimer de la liste locale
+        // Supprimer de la liste locale (toujours faire)
         recipes = recipes.filter(r => r.id !== recipeId);
+        
+        // Sauvegarder dans localStorage
+        saveRecipesToStorage(recipes);
         
         // Supprimer des favoris si elle y était
         favoriteRecipes.delete(recipeId);
@@ -609,7 +700,7 @@ async function deleteRecipe(recipeId) {
         const currentFilter = document.querySelector('.filter-btn.active').dataset.category;
         filterRecipes(currentFilter);
         
-        console.log('✅ Recette supprimée avec succès');
+        console.log('✅ Recette supprimée avec succès !');
     } catch (error) {
         console.error('❌ Erreur lors de la suppression:', error);
         alert('Erreur lors de la suppression de la recette');
@@ -656,4 +747,123 @@ function setupDeleteModal() {
     }
     
     console.log('✅ Modale de suppression configurée');
+}
+
+// ===== PERSISTANCE AVEC LOCALSTORAGE =====
+
+// Sauvegarder les recettes dans localStorage
+function saveRecipesToStorage(recipesList) {
+    try {
+        localStorage.setItem('mealPlannerRecipes', JSON.stringify(recipesList));
+        console.log('💾 Recettes sauvegardées dans localStorage');
+    } catch (error) {
+        console.error('❌ Erreur lors de la sauvegarde:', error);
+    }
+}
+
+// Charger les recettes depuis localStorage
+function loadRecipesFromStorage() {
+    try {
+        const saved = localStorage.getItem('mealPlannerRecipes');
+        if (saved) {
+            const recipes = JSON.parse(saved);
+            console.log('📁 Recettes chargées depuis localStorage:', recipes.length);
+            return recipes;
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement:', error);
+    }
+    return null;
+}
+
+// Recettes par défaut (utilisées la première fois)
+function getDefaultRecipes() {
+    return [
+        {
+            id: '1',
+            nom: 'Pâtes Carbonara',
+            categorie: 'Plat',
+            lien: 'https://example.com/carbonara',
+            ingredients: [
+                { nom: 'Pâtes', quantite: 400, unite: 'g' },
+                { nom: 'Lardons', quantite: 200, unite: 'g' },
+                { nom: 'Œufs', quantite: 4, unite: 'pièce' },
+                { nom: 'Parmesan', quantite: 100, unite: 'g' }
+            ]
+        },
+        {
+            id: '2',
+            nom: 'Salade César',
+            categorie: 'Plat',
+            lien: 'https://example.com/cesar',
+            ingredients: [
+                { nom: 'Salade romaine', quantite: 2, unite: 'pièce' },
+                { nom: 'Poulet', quantite: 300, unite: 'g' },
+                { nom: 'Parmesan', quantite: 50, unite: 'g' },
+                { nom: 'Croûtons', quantite: 100, unite: 'g' }
+            ]
+        },
+        {
+            id: '3',
+            nom: 'Risotto aux champignons',
+            categorie: 'Plat',
+            lien: 'https://example.com/risotto',
+            ingredients: [
+                { nom: 'Riz arborio', quantite: 300, unite: 'g' },
+                { nom: 'Champignons', quantite: 400, unite: 'g' },
+                { nom: 'Bouillon', quantite: 1000, unite: 'ml' },
+                { nom: 'Parmesan', quantite: 80, unite: 'g' }
+            ]
+        },
+        {
+            id: '4',
+            nom: 'Tarte aux pommes',
+            categorie: 'Dessert',
+            lien: 'https://example.com/tarte-pommes',
+            ingredients: [
+                { nom: 'Pâte brisée', quantite: 1, unite: 'pièce' },
+                { nom: 'Pommes', quantite: 6, unite: 'pièce' },
+                { nom: 'Sucre', quantite: 100, unite: 'g' },
+                { nom: 'Beurre', quantite: 50, unite: 'g' }
+            ]
+        },
+        {
+            id: '5',
+            nom: 'Sandwich rapide',
+            categorie: 'Rapide',
+            lien: 'https://example.com/sandwich',
+            ingredients: [
+                { nom: 'Pain de mie', quantite: 4, unite: 'pièce' },
+                { nom: 'Jambon', quantite: 100, unite: 'g' },
+                { nom: 'Fromage', quantite: 50, unite: 'g' },
+                { nom: 'Salade', quantite: 2, unite: 'pièce' }
+            ]
+        },
+        {
+            id: '6',
+            nom: 'Salade de quinoa',
+            categorie: 'Healthy',
+            lien: 'https://example.com/quinoa',
+            ingredients: [
+                { nom: 'Quinoa', quantite: 200, unite: 'g' },
+                { nom: 'Avocat', quantite: 2, unite: 'pièce' },
+                { nom: 'Tomates cerises', quantite: 200, unite: 'g' },
+                { nom: 'Concombre', quantite: 1, unite: 'pièce' },
+                { nom: 'Feta', quantite: 100, unite: 'g' }
+            ]
+        },
+        {
+            id: '7',
+            nom: 'Bowl végétarien',
+            categorie: 'Healthy',
+            lien: 'https://example.com/bowl',
+            ingredients: [
+                { nom: 'Riz complet', quantite: 150, unite: 'g' },
+                { nom: 'Brocolis', quantite: 300, unite: 'g' },
+                { nom: 'Pois chiches', quantite: 200, unite: 'g' },
+                { nom: 'Carottes', quantite: 2, unite: 'pièce' },
+                { nom: 'Graines de tournesol', quantite: 50, unite: 'g' }
+            ]
+        }
+    ];
 }
