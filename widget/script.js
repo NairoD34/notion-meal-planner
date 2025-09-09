@@ -295,14 +295,22 @@ function dropRecipe(e) {
     const recipeId = e.dataTransfer.getData('text/plain');
     const recipe = recipes.find(r => r.id === recipeId);
     
+    console.log(`🍽️ DROPPING RECIPE: ${recipeId}`);
+    console.log('Recipe found:', recipe);
+    console.log('Current planning before drop:', JSON.stringify(currentPlanning, null, 2));
+    
     if (recipe) {
         const dayColumn = dropZone.closest('.day-column');
         const mealSlot = dropZone.closest('.meal-slot');
         const day = dayColumn.dataset.day;
         const meal = mealSlot.dataset.meal;
         
+        console.log(`Dropping to: ${day} ${meal}`);
+        
         // Ajouter la recette au planning
         currentPlanning[day][meal] = recipe;
+        
+        console.log('Current planning after drop:', JSON.stringify(currentPlanning, null, 2));
         
         // Mettre à jour l'affichage
         dropZone.innerHTML = `
@@ -313,6 +321,13 @@ function dropRecipe(e) {
         `;
         
         console.log(`Recette "${recipe.nom}" ajoutée pour ${day} ${meal}`);
+        
+        // 🆕 Sauvegarde automatique du planning
+        console.log('🔄 Déclenchement de la sauvegarde automatique...');
+        autoSavePlanning();
+        
+        // Régénérer la liste de courses
+        generateShoppingList();
     }
 }
 
@@ -324,6 +339,12 @@ function removeRecipe(day, meal) {
     dropZone.innerHTML = '<span class="placeholder">Glissez une recette ici</span>';
     
     console.log(`Recette supprimée pour ${day} ${meal}`);
+    
+    // 🆕 Sauvegarde automatique du planning
+    autoSavePlanning();
+    
+    // Régénérer la liste de courses
+    generateShoppingList();
 }
 
 // Navigation des semaines
@@ -369,6 +390,9 @@ function updateWeekDisplay() {
     
     // Mettre à jour les couleurs des jours pour marquer aujourd'hui
     updateDayHighlights(isCurrentWeek);
+    
+    // 🆕 Charger le planning de cette semaine
+    loadWeekPlanning();
 }
 
 // Fonction pour surligner le jour actuel
@@ -466,6 +490,198 @@ async function saveWeekToNotion() {
         console.error('Erreur lors de la sauvegarde:', error);
         alert('❌ Erreur lors de la sauvegarde');
     }
+}
+
+// 🆕 Sauvegarde automatique du planning (silencieuse)
+async function autoSavePlanning() {
+    try {
+        console.log('💾 🔄 SAUVEGARDE AUTOMATIQUE du planning...');
+        console.log('📦 Planning à sauvegarder:', JSON.stringify(currentPlanning, null, 2));
+        
+        // Essayer de sauvegarder via le proxy Notion
+        try {
+            const weekData = {
+                week: getCurrentWeekString(),
+                planning: currentPlanning,
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('🌐 Envoi vers Notion:', weekData);
+            
+            const response = await fetch(`${NOTION_CONFIG.proxyURL}/planning`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(weekData)
+            });
+            
+            console.log('📡 Réponse du serveur:', response.status, response.statusText);
+            
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Planning sauvegardé dans Notion:', result);
+                showAutoSaveNotification('✅ Sauvegardé');
+            } else {
+                const errorText = await response.text();
+                console.error('❌ Erreur serveur:', response.status, errorText);
+                throw new Error(`Erreur sauvegarde: ${response.status}`);
+            }
+        } catch (proxyError) {
+            console.warn('⚠️ Sauvegarde Notion indisponible, sauvegarde locale:', proxyError);
+            
+            // Fallback vers localStorage
+            const planningData = {
+                week: getCurrentWeekString(),
+                planning: currentPlanning,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('meal-planner-current-week', JSON.stringify(planningData));
+            console.log('✅ Planning sauvegardé localement:', planningData);
+            showAutoSaveNotification('💾 Sauvegardé localement');
+        }
+    } catch (error) {
+        console.error('❌ Erreur lors de la sauvegarde automatique:', error);
+    }
+}
+
+// 🆕 Charger le planning d'une semaine spécifique
+async function loadWeekPlanning() {
+    try {
+        const weekString = getCurrentWeekString();
+        console.log(`📅 🔍 CHARGEMENT DU PLANNING pour la semaine: ${weekString}`);
+        
+        // Vider d'abord le planning actuel
+        currentPlanning = {};
+        console.log('🧹 Planning vidé, initialisation...');
+        
+        // Réinitialiser le planning avec structure vide
+        const days = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+        const meals = ['midi', 'soir'];
+        days.forEach(day => {
+            currentPlanning[day] = {};
+            meals.forEach(meal => {
+                currentPlanning[day][meal] = null;
+            });
+        });
+        
+        console.log('🏗️ Structure du planning initialisée:', JSON.stringify(currentPlanning, null, 2));
+        
+        // Essayer de charger depuis Notion via le proxy
+        try {
+            console.log(`🌐 Tentative de chargement depuis Notion: ${NOTION_CONFIG.proxyURL}/planning/${weekString}`);
+            const response = await fetch(`${NOTION_CONFIG.proxyURL}/planning/${weekString}`);
+            
+            if (response.ok) {
+                const planningData = await response.json();
+                console.log('📦 Données reçues de Notion:', planningData);
+                currentPlanning = planningData.planning || {};
+                console.log('✅ Planning chargé depuis Notion:', JSON.stringify(currentPlanning, null, 2));
+            } else if (response.status === 404) {
+                console.log('ℹ️ Aucun planning trouvé pour cette semaine dans Notion - planning vide');
+            } else {
+                throw new Error(`Erreur chargement: ${response.status}`);
+            }
+        } catch (proxyError) {
+            console.warn('⚠️ Notion indisponible, tentative de chargement local');
+            
+            // Fallback vers localStorage
+            const savedData = localStorage.getItem('meal-planner-current-week');
+            if (savedData) {
+                const planningData = JSON.parse(savedData);
+                if (planningData.week === weekString) {
+                    currentPlanning = planningData.planning || {};
+                    console.log('✅ Planning chargé depuis localStorage');
+                }
+            }
+        }
+        
+        // Mettre à jour l'affichage
+        updatePlanningDisplay();
+        
+        // Régénérer la liste de courses
+        generateShoppingList();
+        
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement du planning:', error);
+    }
+}
+
+// 🆕 Mettre à jour l'affichage du planning
+function updatePlanningDisplay() {
+    // Réinitialiser toutes les zones
+    document.querySelectorAll('.recipe-drop-zone').forEach(zone => {
+        zone.innerHTML = '<span class="placeholder">Glissez une recette ici</span>';
+    });
+    
+    // Afficher les recettes planifiées
+    Object.entries(currentPlanning).forEach(([day, dayMeals]) => {
+        Object.entries(dayMeals).forEach(([meal, recipe]) => {
+            if (recipe) {
+                const dropZone = document.querySelector(`[data-day="${day}"] [data-meal="${meal}"] .recipe-drop-zone`);
+                if (dropZone) {
+                    dropZone.innerHTML = `
+                        <div class="recipe-card-small">
+                            ${recipe.nom}
+                            <button class="remove-btn" onclick="removeRecipe('${day}', '${meal}')">&times;</button>
+                        </div>
+                    `;
+                }
+            }
+        });
+    });
+}
+
+// Fonction pour obtenir la chaîne de la semaine courante
+function getCurrentWeekString() {
+    const weekStart = new Date(currentWeek);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Lundi
+    
+    const year = weekStart.getFullYear();
+    const month = String(weekStart.getMonth() + 1).padStart(2, '0');
+    const day = String(weekStart.getDate()).padStart(2, '0');
+    
+    return `${year}-W${getWeekNumber(weekStart)}`;
+}
+
+// Fonction pour obtenir le numéro de semaine
+function getWeekNumber(date) {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+    return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+}
+
+// Notification de sauvegarde automatique
+function showAutoSaveNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #10b981;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0.9;
+        transition: opacity 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Supprimer automatiquement après 2 secondes
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 2000);
 }
 
 // Duplication de semaine
