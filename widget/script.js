@@ -1,4 +1,4 @@
-// Configuration de l'API Notion via Proxy
+// Configuration de l'API Notion via Proxy - Version Sept 2025
 const NOTION_CONFIG = {
     proxyURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? 'http://localhost:3001' 
@@ -91,6 +91,7 @@ async function loadRecipes() {
         // Tenter de charger depuis Notion via le proxy
         try {
             console.log('📡 Connexion au proxy Notion...');
+            console.log('🔗 URL utilisée:', `${NOTION_CONFIG.proxyURL}/recipes`);
             const response = await fetch(`${NOTION_CONFIG.proxyURL}/recipes`);
             
             if (response.ok) {
