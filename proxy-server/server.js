@@ -63,6 +63,25 @@ async function callNotionAPI(endpoint, method = 'GET', data = null) {
 
 // ===== ROUTES API =====
 
+// Route racine
+app.get('/', (req, res) => {
+    res.json({ 
+        message: '🍽️ Meal Planner - Proxy Notion API', 
+        status: 'active',
+        timestamp: new Date().toISOString(),
+        endpoints: {
+            recipes: {
+                'GET /recipes': 'Récupérer toutes les recettes',
+                'POST /recipes': 'Créer une nouvelle recette',  
+                'DELETE /recipes/:id': 'Supprimer une recette'
+            },
+            test: {
+                'GET /api/test': 'Test de connexion'
+            }
+        }
+    });
+});
+
 // Route de test
 app.get('/api/test', (req, res) => {
     res.json({ 
@@ -75,7 +94,7 @@ app.get('/api/test', (req, res) => {
 // ===== GESTION DES RECETTES =====
 
 // Récupérer toutes les recettes
-app.get('/api/recipes', async (req, res) => {
+app.get('/recipes', async (req, res) => {
     try {
         console.log('📚 Récupération des recettes...');
         
@@ -110,7 +129,7 @@ app.get('/api/recipes', async (req, res) => {
 });
 
 // Créer une nouvelle recette
-app.post('/api/recipes', async (req, res) => {
+app.post('/recipes', async (req, res) => {
     try {
         const { nom, categorie, lien, ingredients } = req.body;
         
@@ -160,7 +179,7 @@ app.post('/api/recipes', async (req, res) => {
 });
 
 // Supprimer une recette (archiver dans Notion)
-app.delete('/api/recipes/:id', async (req, res) => {
+app.delete('/recipes/:id', async (req, res) => {
     try {
         const { id } = req.params;
         
