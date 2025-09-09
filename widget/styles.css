@@ -591,3 +591,8 @@ button:hover {
     font-style: italic;
     margin-top: 10px;
 }
+
+/* Modale de suppression */
+#delete-modal {
+    display: none;
+}

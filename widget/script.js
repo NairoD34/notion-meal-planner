@@ -618,21 +618,21 @@ async function deleteRecipe(recipeId) {
 
 // Initialiser les événements de suppression
 function setupDeleteModal() {
-    const closeDeleteModal = document.getElementById('close-delete-modal');
-    const cancelDelete = document.getElementById('cancel-delete');
-    const confirmDelete = document.getElementById('confirm-delete');
+    const closeDeleteModalBtn = document.getElementById('close-delete-modal');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
     
     // Fermer la modale
-    if (closeDeleteModal) {
-        closeDeleteModal.addEventListener('click', closeDeleteModal);
+    if (closeDeleteModalBtn) {
+        closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
     }
-    if (cancelDelete) {
-        cancelDelete.addEventListener('click', closeDeleteModal);
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', closeDeleteModal);
     }
     
     // Confirmer la suppression
-    if (confirmDelete) {
-        confirmDelete.addEventListener('click', async () => {
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', async () => {
             if (recipeToDelete) {
                 await deleteRecipe(recipeToDelete);
                 closeDeleteModal();
