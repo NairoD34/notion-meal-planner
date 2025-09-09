@@ -241,6 +241,7 @@ app.listen(PORT, () => {
     });
     console.log('🌐 CORS activé pour:', ['http://localhost:8000', 'https://nairod34.github.io']);
     console.log('==========================================');
+    console.log('🔄 Version mise à jour - Sept 2025'); // Force redéploiement
 });
 
 // Gestion des erreurs globales
