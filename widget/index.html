@@ -144,6 +144,7 @@
                     <button class="filter-btn" data-category="Plat">Plats</button>
                     <button class="filter-btn" data-category="Dessert">Desserts</button>
                     <button class="filter-btn" data-category="Rapide">Rapides</button>
+                    <button id="add-recipe-btn" class="btn-success" style="margin-left: auto;">+ Nouvelle Recette</button>
                 </div>
                 <div class="recipes-list" id="recipes-list">
                     <!-- Les recettes seront chargées ici -->
@@ -171,6 +172,44 @@
             <button id="save-week" class="btn-success">💾 Sauvegarder la semaine</button>
             <button id="duplicate-week" class="btn-info">📋 Dupliquer la semaine</button>
             <button id="clear-week" class="btn-warning">🗑️ Vider la semaine</button>
+        </div>
+
+        <!-- Modal pour ajouter une recette -->
+        <div id="recipe-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🍽️ Nouvelle Recette</h3>
+                    <span class="close" onclick="closeRecipeModal()">&times;</span>
+                </div>
+                <form id="recipe-form">
+                    <div class="form-group">
+                        <label for="recipe-name">Nom de la recette *</label>
+                        <input type="text" id="recipe-name" required placeholder="Ex: Pâtes à la carbonara">
+                    </div>
+                    <div class="form-group">
+                        <label for="recipe-category">Catégorie *</label>
+                        <select id="recipe-category" required>
+                            <option value="">Choisir une catégorie</option>
+                            <option value="Plat">Plat</option>
+                            <option value="Dessert">Dessert</option>
+                            <option value="Rapide">Rapide</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="recipe-link">Lien vers la recette</label>
+                        <input type="url" id="recipe-link" placeholder="https://example.com/ma-recette">
+                    </div>
+                    <div class="form-group">
+                        <label for="recipe-ingredients">Ingrédients (un par ligne)</label>
+                        <textarea id="recipe-ingredients" rows="6" placeholder="Pâtes - 400g&#10;Lardons - 200g&#10;Œufs - 4 pièces&#10;Parmesan - 100g"></textarea>
+                        <small>Format: Nom - Quantité Unité (ex: Tomates - 3 pièces)</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" onclick="closeRecipeModal()" class="btn-secondary">Annuler</button>
+                        <button type="submit" class="btn-primary">Créer la Recette</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 

@@ -58,6 +58,10 @@ function setupEventListeners() {
     document.getElementById('save-week').addEventListener('click', saveWeekToNotion);
     document.getElementById('duplicate-week').addEventListener('click', duplicateWeek);
     document.getElementById('clear-week').addEventListener('click', clearWeek);
+    
+    // Ajouter une recette
+    document.getElementById('add-recipe-btn').addEventListener('click', openRecipeModal);
+    document.getElementById('recipe-form').addEventListener('submit', handleCreateRecipe);
 }
 
 // Chargement des recettes depuis Notion
@@ -383,4 +387,120 @@ window.MealPlanner = {
     saveWeekToNotion,
     currentPlanning,
     shoppingList
+};
+
+// Gestion du modal pour ajouter une recette
+function openRecipeModal() {
+    document.getElementById('recipe-modal').style.display = 'flex';
+}
+
+function closeRecipeModal() {
+    document.getElementById('recipe-modal').style.display = 'none';
+    document.getElementById('recipe-form').reset();
+}
+
+// Créer une nouvelle recette
+async function handleCreateRecipe(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const name = document.getElementById('recipe-name').value;
+    const category = document.getElementById('recipe-category').value;
+    const link = document.getElementById('recipe-link').value;
+    const ingredientsText = document.getElementById('recipe-ingredients').value;
+    
+    // Parser les ingrédients
+    const ingredients = parseIngredients(ingredientsText);
+    
+    try {
+        // Créer la recette dans Notion
+        const newRecipe = await createRecipeInNotion(name, category, link, ingredients);
+        
+        // Ajouter à la liste locale
+        recipes.push(newRecipe);
+        
+        // Rafraîchir l'affichage
+        displayRecipes(recipes);
+        
+        // Fermer le modal
+        closeRecipeModal();
+        
+        alert('✅ Recette créée avec succès !');
+    } catch (error) {
+        console.error('Erreur lors de la création de la recette:', error);
+        alert('❌ Erreur lors de la création de la recette');
+    }
+}
+
+// Parser le texte des ingrédients
+function parseIngredients(ingredientsText) {
+    if (!ingredientsText.trim()) return [];
+    
+    return ingredientsText
+        .split('\n')
+        .filter(line => line.trim())
+        .map(line => {
+            const match = line.match(/^(.+?)\s*-\s*(\d+(?:\.\d+)?)\s*(\w+)$/);
+            if (match) {
+                return {
+                    nom: match[1].trim(),
+                    quantite: parseFloat(match[2]),
+                    unite: match[3].trim()
+                };
+            } else {
+                // Format simple sans quantité
+                return {
+                    nom: line.trim(),
+                    quantite: 1,
+                    unite: 'pièce'
+                };
+            }
+        });
+}
+
+// Créer une recette dans Notion
+async function createRecipeInNotion(name, category, link, ingredients) {
+    try {
+        // Créer la page de recette
+        const recipeData = {
+            parent: { database_id: NOTION_CONFIG.databases.recettes },
+            properties: {
+                "Nom": {
+                    title: [{ text: { content: name } }]
+                },
+                "Catégorie": {
+                    select: { name: category }
+                }
+            }
+        };
+        
+        if (link) {
+            recipeData.properties["Lien"] = {
+                url: link
+            };
+        }
+        
+        const response = await callNotionAPI('pages', 'POST', recipeData);
+        
+        // TODO: Ajouter les ingrédients (nécessite de créer les ingrédients d'abord)
+        
+        return {
+            id: response.id,
+            nom: name,
+            categorie: category,
+            lien: link,
+            ingredients: ingredients
+        };
+    } catch (error) {
+        console.error('Erreur API Notion:', error);
+        throw error;
+    }
+}
+
+// Fermer le modal en cliquant à l'extérieur
+window.onclick = function(event) {
+    const modal = document.getElementById('recipe-modal');
+    if (event.target === modal) {
+        closeRecipeModal();
+    }
 };
