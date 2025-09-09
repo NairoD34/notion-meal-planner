@@ -76,6 +76,7 @@ function setupEventListeners() {
     document.getElementById('save-week').addEventListener('click', saveWeekToNotion);
     document.getElementById('duplicate-week').addEventListener('click', duplicateWeek);
     document.getElementById('clear-week').addEventListener('click', clearWeek);
+    console.log('🔧 Événement clearWeek attaché au bouton');
     
     // Ajouter une recette
     document.getElementById('add-recipe-btn').addEventListener('click', openRecipeModal);
@@ -479,23 +480,66 @@ function duplicateWeek() {
 
 // Vider la semaine
 function clearWeek() {
+    console.log('🗑️ Fonction clearWeek appelée');
+    console.log('Planning actuel avant vidage:', currentPlanning);
+    
     const confirmation = confirm('Voulez-vous vraiment vider toute la planification de cette semaine ?');
     if (confirmation) {
+        console.log('✅ Confirmation obtenue, vidage en cours...');
+        
         // Réinitialiser le planning
-        Object.keys(currentPlanning).forEach(day => {
-            Object.keys(currentPlanning[day]).forEach(meal => {
-                currentPlanning[day][meal] = null;
-            });
+        currentPlanning = {};
+        
+        // Réinitialiser l'affichage de toutes les zones de drop
+        const dropZones = document.querySelectorAll('.recipe-drop-zone');
+        console.log(`🎯 Zones à vider trouvées: ${dropZones.length}`);
+        
+        dropZones.forEach((zone, index) => {
+            // Supprimer tout contenu existant
+            zone.innerHTML = '';
+            
+            // Remettre le placeholder
+            const placeholder = document.createElement('span');
+            placeholder.className = 'placeholder';
+            placeholder.textContent = 'Glissez une recette ici';
+            zone.appendChild(placeholder);
+            
+            // Retirer les classes de recette
+            zone.classList.remove('has-recipe');
+            zone.style.backgroundColor = '';
+            
+            console.log(`Zone ${index + 1} vidée`);
         });
         
-        // Réinitialiser l'affichage
-        document.querySelectorAll('.recipe-drop-zone').forEach(zone => {
-            zone.innerHTML = '<span class="placeholder">Glissez une recette ici</span>';
-        });
-        
+        // Vider la liste de courses
         clearShoppingList();
-        console.log('Semaine vidée');
-        alert('✅ Semaine vidée !');
+        
+        console.log('✅ Semaine complètement vidée');
+        console.log('Planning après vidage:', currentPlanning);
+        
+        // Message de confirmation plus visible
+        const message = document.createElement('div');
+        message.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            font-weight: 600;
+        `;
+        message.textContent = '✅ Semaine vidée avec succès !';
+        document.body.appendChild(message);
+        
+        // Supprimer le message après 3 secondes
+        setTimeout(() => {
+            document.body.removeChild(message);
+        }, 3000);
+    } else {
+        console.log('❌ Vidage annulé par l\'utilisateur');
     }
 }
 
