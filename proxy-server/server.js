@@ -14,7 +14,8 @@ app.use(cors({
     origin: [
         'http://localhost:8000',
         'http://127.0.0.1:8000',
-        'https://nairod34.github.io'
+        'https://nairod34.github.io',
+        'https://nairod34.github.io/notion-meal-planner'
     ],
     credentials: true
 }));

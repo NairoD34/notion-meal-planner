@@ -1,6 +1,8 @@
 // Configuration de l'API Notion via Proxy
 const NOTION_CONFIG = {
-    proxyURL: 'http://localhost:3001/api', // URL du serveur proxy
+    proxyURL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:3001' 
+        : 'https://votre-proxy-url.onrender.com', // URL du serveur proxy déployé
     apiKey: 'ntn_x27335937177Ycms81oM2Sb7Upo0RJJg3YlBcgP73AzahB', // Garde pour référence
     version: '2022-06-28',
     databases: {
@@ -206,7 +208,6 @@ function getDefaultRecipes() {
                 ]
             }
         ];
-    }
 }
 
 // Affichage des recettes
